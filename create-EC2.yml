@@ -1,5 +1,5 @@
 ---
- - name:  provisioning EC2 instances using Ansible
+ - name:  provisioning a new EC2 using Ansible playbook
    hosts: localhost
    connection: local
    gather_facts: False
@@ -13,12 +13,12 @@
      group: webserver
      count: 1
      region: eu-west-2
-     security_group: my-jenkins-security-grp
-
+     security_group: ec2-security-group
+   
    tasks:
 
-     - name: Task # 1 - Create my security group
-       local_action:
+     - name: Create a security group
+       local_action: 
          module: ec2_group
          name: "{{ security_group }}"
          description: Security Group for webserver Servers
@@ -36,17 +36,22 @@
               from_port: 80
               to_port: 80
               cidr_ip: 0.0.0.0/0
+            - proto: tcp
+              from_port: 443
+              to_port: 443
+              cidr_ip: 0.0.0.0/0
          rules_egress:
             - proto: all
               cidr_ip: 0.0.0.0/0
        register: basic_firewall
-     - name: Task # 2 Launch the new EC2 Instance
-       local_action:  ec2
-                      group={{ security_group }}
-                      instance_type={{ instance_type}}
-                      image={{ image }}
-                      wait=true
-                      region={{ region }}
+     
+     - name: Launch the new EC2 Instance
+       local_action:  ec2 
+                      group={{ security_group }} 
+                      instance_type={{ instance_type}} 
+                      image={{ image }} 
+                      wait=true 
+                      region={{ region }} 
                       keypair={{ keypair }}
                       count={{count}}
        register: ec2
@@ -55,5 +60,4 @@
        with_items: "{{ ec2.instances }}"
        args:
          tags:
-           Name: MyTargetEc2Instance1
-
+           Name: MyTargetEc2Instance
